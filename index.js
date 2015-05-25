@@ -3,6 +3,35 @@
  **/
 
 
+var vis = (function() {
+  'use strict';
+
+  var stack = [];
+
+  return {
+    entry: function(str) {
+      stack.push(str);
+      //this.display();
+    },
+
+    exit: function() {
+      stack.pop();
+      //this.display();
+    },
+
+    display: function(name) {
+      var str = Array(stack.length).join('  ') + stack[stack.length - 1];
+      if (name) {
+        str += Array(Math.max(42 - str.length, 0)).join(' ') + '  --  ' + name;
+      }
+      /* eslint-disable no-console */
+      console.log(str);
+      /* eslint-enable no-console */
+    }
+  };
+})();
+
+
 (function (root) {
   'use strict';
 
@@ -176,10 +205,17 @@
     }
 
     // iterates through handlers of stash
+    var first = true;
     function walk(err) {
+      first = false;
+      vis.entry(channel);
 
       // chain finished - exit
       if (!stash.length) {
+        if (first) {
+          vis.display(' ** empty **');
+        }
+        vis.exit(channel);
         callback(err);
         return;
       }
@@ -190,6 +226,7 @@
 
       // if error - skip all handlers except 'ehshured'
       if (err && !wh.ensure) {
+        vis.exit(channel);
         walk(err);
         return;
       }
@@ -203,11 +240,15 @@
       // Call handler, but protect err from override,
       // if already exists
       if (!wh.sync) {
+        vis.display(wh.name);
         fn(params, function (e) {
+          vis.exit(channel);
           walk(err || e);
         });
       } else {
+        vis.display(wh.name);
         _err = fn(params);
+        vis.exit(channel);
         walk(err || _err);
       }
 
